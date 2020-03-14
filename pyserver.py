@@ -14,12 +14,8 @@ import re
 import soupsieve
 from bs4 import BeautifulSoup
 
-debug = False
-emailInterval = 60
-volume = 100
-
-if debug:
-    volume = 0
+if settings.debug:
+    settings.volume = 0
 
 running = 1
 playerRunning = 0
@@ -36,7 +32,7 @@ def playFile(song):
     instance = vlc.Instance()
     player = instance.media_player_new()
     media = instance.media_new_path(song)
-    player.audio_set_volume(volume)
+    player.audio_set_volume(settings.volume)
     player.set_media(media)
     events = player.event_manager()
     events.event_attach(vlc.EventType.MediaPlayerEndReached, SongFinished)
@@ -82,14 +78,8 @@ def getNamePR(text, pattern):
 
 
 def checkEmails(debug):
-    email_user = ''
-    email_pass = ''
-    imap_server = ''
-    project_name = ''
-    pr_sound = ''
-
-    mail = imaplib.IMAP4_SSL(imap_server, 993)
-    mail.login(email_user, email_pass)
+    mail = imaplib.IMAP4_SSL(settings.email['imap_server'], 993)
+    mail.login(settings.email['user'], settings.email['pw'])
     mail.select("Inbox")
 
     typ, message_numbers = mail.uid('search', None,'(UNSEEN)')
@@ -109,17 +99,17 @@ def checkEmails(debug):
         content = msg.get_payload(decode=True)
         if "created a new pull request" in content:
             print("    --> PR found!")
-            playFile(pr_sound)
+            playFile(settings.sound['pullrequest'])
             name = getNamePR(content, '\n(.+?) created a new pull request').lstrip()
             print("==> " + name)
             name = name.split(" ")[0]
             speech(name + ' created a new pull request!')
-        elif "[PR build succeeded] " + project_name in subject:
+        elif "[PR build succeeded] " + settings.project_name in subject:
             print("    --> SUCCEEDED BUILD")
             name = getNameRequested(content)
             print("==> " + name)
             speech('Yes, build succeeded! Congrats, ' + name + ' to your great work!')
-        elif "[PR build failed] " + project_name in subject:
+        elif "[PR build failed] " + settings.project_name in subject:
             print("    --> FAILED BUILD")
             name = getNameRequested(content)
             speech("Oh no! " + name + ", you need to fix your build!")
@@ -138,5 +128,5 @@ ensureConnection()
 speech('starting up...')
 while running == 1:
     print("checking for mails...")
-    checkEmails(debug)
-    time.sleep(emailInterval)
+    checkEmails(settings.debug)
+    time.sleep(settings.email['interval'])
