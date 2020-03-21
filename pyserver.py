@@ -102,7 +102,7 @@ def checkEmails(debug):
             playFile(settings.sound['pullrequest'])
             name = getNamePR(content, '\n(.+?) created a new pull request').lstrip()
             print("==> " + name)
-            name = name.split(" ")[0]
+            name = name.split(" ")[0].split(".")[0]
             speech(name + ' created a new pull request!')
         elif "[PR build succeeded] " + settings.project_name in subject:
             print("    --> SUCCEEDED BUILD")
